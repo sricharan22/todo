@@ -17,11 +17,12 @@
 
   <title>To-do List</title>
   <style>
-    #colo{
+    #colo {
       font-size: 30px;
       font-family: serif;
     }
-    h4{
+
+    h4 {
       font-size: 40px;
     }
   </style>
@@ -43,40 +44,104 @@
         this.state =
         {
           task: "",
+          date: "",
+          time: "",
           list: [],
           count: 0,
         };
+      }
+
+      componentDidMount() {
+        var cnt = localStorage.getItem("count");
+        var list1 = localStorage.getItem("list");
+        var list2 = JSON.parse(list1);
+        // alert(list2 == null);
+        if(list2 != null){
+        list2.map((ele, index) => {
+          var today = new Date();
+          var year = today.getFullYear();
+          var month = today.getMonth() + 1;
+          if (month < 10) {
+            month = "0" + month;
+          }
+          var td = today.getDate();
+          if (td < 10) {
+            td = "0" + td;
+          }
+          var date = year + '-' + month + '-' + td;
+          if (date >= ele.date) {
+            if (date == ele.date) {
+              if (today.getHours() + ":" + today.getMinutes() >= ele.time) {
+                alert("task " + ele.task + " is being delted");
+                list2.splice(index, 1);
+                cnt -= 1;
+              }
+            }
+            else {
+              alert("task " + ele.task + " is being delted");
+              list2.splice(index, 1);
+              cnt -= 1;
+            }
+          }
+        });
+      }
+
+
+        if (cnt != null) {
+          this.setState({ count: parseInt(cnt), list: [...list2] });
+        }
+        window.addEventListener("beforeunload", () => {
+          localStorage.setItem("count", this.state.count);
+          // alert(this.state.list);
+          localStorage.setItem("list", JSON.stringify(this.state.list));
+        });
       }
 
       render() {
         return (
           <div class="container">
             <div class="row">
-              <div class="col-md-3"></div>
-              <div class="col-md-6 mt-5">
+              <div class="col-md-2"></div>
+              <div class="col-md-8 mt-3">
                 <center>
-                
-                    <div class="form-group">
-                      <label for="exampleInputEmail1" id="colo">Enter a Task</label>
-                      <input type="test" class="form-control mt-5" id="exampleInputEmail1" placeholder="Enter Task" onChange={this.read} value={this.state.task} />
-                    </div>
-                    <div><button type="submit" class="btn btn-warning mt-5" onClick={this.addtask}>Add to List</button></div>
-                 
+                  <h1>Enter details of a task</h1>
+                  <div class="form-group mt-5">
+                    <label for="exampleInputEmail1" id="colo">Enter Task Name</label>
+                    <input type="text" class="form-control mt-1" id="exampleInputEmail1" placeholder="Enter Task" onChange={this.read} value={this.state.task} />
+                  </div>
+                  <div class="form-group">
+                    <label for="example-date-input" id="colo">Submission Date</label>
+                    <input class="form-control" type="date" id="example-date-input" onChange={this.readdob} value={this.state.date} />
+                  </div>
+                  <div class="form-group">
+                    <label for="example-time-input" id="colo">Time (in 24hrs format)</label>
+                    <input class="form-control" type="time" onChange={this.readtime} value={this.state.time} id="example-time-input" />
+                  </div>
+                  <div><button type="submit" class="btn btn-warning mt-5" onClick={this.addtask}>Add to List</button></div>
+
                   <div><h4 class="mt-5">Total Tasks Pending: {this.state.count}</h4></div>
                   <div>
                     <table class="table table-bordered mt-5 table-hover table-dark table-striped">
                       <thead class="thead-dark">
                         <tr>
-                          <th colspan="2" ><center>DETAILS OF TASKS PENDING</center></th>
+                          <th colSpan="5" ><center>DETAILS OF TASKS PENDING</center></th>
+                        </tr>
+                        <tr>
+                          <th><center>TASK</center></th>
+                          <th><center>SUBMISSION DATE</center></th>
+                          <th><center>DEADLINE</center></th>
+                          <th colSpan="2"><center>OPERATIONS</center></th>
                         </tr>
                       </thead>
 
                       <tbody>
                         {this.state.list.map((ele, index) =>
                           <tr key={index}>
-                            <td>{ele}</td>
-
-                            <center><td><button type="submit" class="btn btn-warning" onClick={this.deletetask} value={index} >Remove Task</button></td></center>
+                            <td>{ele.task}</td>
+                            <td>{ele.date}</td>
+                            <td>{ele.time}</td>
+                            <td><center><button type="submit" class="btn btn-warning" onClick={this.deletetask} value={index} >Remove Task</button></center></td>
+                            <td><center><button type="submit" class="btn btn-warning" onClick={this.updatetask} value={index} >Update Task</button></center></td>
                           </tr>
                         )}
                       </tbody>
@@ -84,34 +149,141 @@
                   </div>
                 </center>
               </div>
-              <div class="col-md-3"></div>
-              </div>
-              </div>
+              <div class="col-md-2"></div>
+            </div>
+          </div>
         );
       }
 
       read = (event) => {
 
-                this.setState({ task: event.target.value });
+        this.setState({ task: event.target.value });
+      };
+      readdob = (event) => {
+
+        this.setState({ date: event.target.value });
+      };
+      readtime = (event) => {
+
+        this.setState({ time: event.target.value });
       };
       addtask = () => {
 
-                this.setState({ list: [...this.state.list, this.state.task], task: "", count: this.state.count + 1 });
-      }
+        this.setState({ list: [...this.state.list, { task: this.state.task, date: this.state.date, time: this.state.time }], task: "", date: "", time: "", count: this.state.count + 1 });
+        // this.setState({ dl: [...this.state.dl, this.state.date], date: "" });
+        // this.setState({ tl: [...this.state.tl, this.state.time], time: "" });
+      };
       deletetask = (event) => {
         const list = [...this.state.list];
 
         list.splice(Number(event.target.value), 1);
         console.log(list);
-        this.setState({list: [...list], count: this.state.count - 1 })
+        this.setState({ list: [...list], count: this.state.count - 1 })
         console.log(event.target.value);
 
-      }
+      };
+      updatetask = (event) => {
+        localStorage.setItem("list", JSON.stringify(this.state.list));
+        ReactDOM.render(<Update numb={event.target.value} />, document.querySelector("#todo"));
+      };
 
     }
 
     ReactDOM.render(<Todo />, document.querySelector("#todo"));
 
+    class Update extends React.Component {
+
+      constructor() {
+        super();
+        this.state = {
+          changetask: "",
+          changedate: "",
+          changetime: "",
+          modifiedlist: []
+        };
+      }
+
+      componentDidMount() {
+        const newlist = localStorage.getItem("list");
+        const list1 = JSON.parse(newlist);
+        var ta = "";
+        var ti = "";
+        var dt = "";
+        list1.map((ele, index) => {
+          if (index == Number(this.props.numb)) {
+            ta = ele.task;
+            ti = ele.time;
+            dt = ele.date;
+          }
+        });
+        this.setState({ modifiedlist: [...list1], changetask: ta, changedate: dt, changetime: ti });
+
+        window.addEventListener("beforeunload", () => {
+
+
+          localStorage.setItem("list", JSON.stringify(this.state.modifiedlist));
+          ReactDOM.render(<Todo />, document.querySelector("#todo"));
+        });
+      }
+
+      render() {
+        return (
+          <div class="container">
+            <div class="row">
+              <div class="col-md-2"></div>
+              <div class="col-md-8 mt-3">
+                <center>
+                  <h1>Change required details of a task</h1>
+                  <div class="form-group mt-5">
+                    <label for="exampleInputEmail1" id="colo">Task Name</label>
+                    <input type="text" class="form-control mt-1" id="exampleInputEmail1" onChange={this.readnewtask} value={this.state.changetask} />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="example-date-input" id="colo">Submission Date</label>
+                    <input class="form-control" type="date" id="example-date-input" onChange={this.readnewdate} value={this.state.changedate} />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="example-time-input" id="colo">Time (in 24hrs format)</label>
+                    <input class="form-control" type="time" onChange={this.readnewtime} value={this.state.changetime} id="example-time-input" />
+                  </div>
+
+                  <div><button type="submit" class="btn btn-warning mt-5" onClick={this.change}>SAVE CHANGES</button></div>
+                </center>
+              </div>
+              <div class="col-md-2"></div>
+            </div>
+          </div>
+        );
+      }
+
+      readnewtask = (event) => {
+        this.setState({ changetask: event.target.value });
+      };
+
+      readnewtime = (event) => {
+        this.setState({ changetime: event.target.value });
+      };
+
+      readnewdate = (event) => {
+        this.setState({ changedate: event.target.value });
+      };
+
+
+      change = () => {
+
+        const oldlist = [...this.state.modifiedlist];
+        oldlist.map((ele, index) => {
+          if (index == Number(this.props.numb)) {
+            ele.task = this.state.changetask;
+            ele.date = this.state.changedate;
+            ele.time = this.state.changetime;
+          }
+        });
+        this.setState({ modifiedlist: [...oldlist] });
+      };
+    }
   </script>
 
 
