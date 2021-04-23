@@ -47,6 +47,7 @@
           date: "",
           time: "",
           list: [],
+          deletedlist: [],
           count: 0,
         };
       }
@@ -54,46 +55,58 @@
       componentDidMount() {
         var cnt = localStorage.getItem("count");
         var list1 = localStorage.getItem("list");
+        var delet = localStorage.getItem("deletedlist");
+        var deleted = JSON.parse(delet);
         var list2 = JSON.parse(list1);
         // alert(list2 == null);
-        if(list2 != null){
-        list2.map((ele, index) => {
-          var today = new Date();
-          var year = today.getFullYear();
-          var month = today.getMonth() + 1;
-          if (month < 10) {
-            month = "0" + month;
-          }
-          var td = today.getDate();
-          if (td < 10) {
-            td = "0" + td;
-          }
-          var date = year + '-' + month + '-' + td;
-          if (date >= ele.date) {
-            if (date == ele.date) {
-              if (today.getHours() + ":" + today.getMinutes() >= ele.time) {
+        if (list2 != null && list2.length != 0) {
+          list2.map((ele, index) => {
+            var today = new Date();
+            var year = today.getFullYear();
+            var month = today.getMonth() + 1;
+            if (month < 10) {
+              month = "0" + month;
+            }
+            var td = today.getDate();
+            if (td < 10) {
+              td = "0" + td;
+            }
+            var date = year + '-' + month + '-' + td;
+            if (date >= ele.date) {
+              if (date == ele.date) {
+                if (today.getHours() + ":" + today.getMinutes() >= ele.time) {
+                  alert("task " + ele.task + " is being delted");
+                  list2.splice(index, 1);
+                  cnt -= 1;
+                }
+              }
+              else {
                 alert("task " + ele.task + " is being delted");
                 list2.splice(index, 1);
                 cnt -= 1;
               }
             }
-            else {
-              alert("task " + ele.task + " is being delted");
-              list2.splice(index, 1);
-              cnt -= 1;
-            }
-          }
-        });
-      }
+          });
+        }
+        else if (list2.length == 0) {
+          // alert("hiii");
+          // var l1 = this.state.list;
+          fetch("https://raw.githubusercontent.com/sricharan22/htmlques/master/tasks.html")
+            .then(response => response.json())
+            .then(data => {
+              this.setState({ list: [...data], count: data.length });
+            });
+        }
 
 
         if (cnt != null) {
-          this.setState({ count: parseInt(cnt), list: [...list2] });
+          this.setState({ count: parseInt(cnt), list: [...list2], deletedlist: [...deleted] });
         }
         window.addEventListener("beforeunload", () => {
           localStorage.setItem("count", this.state.count);
           // alert(this.state.list);
           localStorage.setItem("list", JSON.stringify(this.state.list));
+          localStorage.setItem("deletedlist", JSON.stringify(this.state.deletedlist));
         });
       }
 
@@ -117,20 +130,22 @@
                     <label for="example-time-input" id="colo">Time (in 24hrs format)</label>
                     <input class="form-control" type="time" onChange={this.readtime} value={this.state.time} id="example-time-input" />
                   </div>
-                  <div><button type="submit" class="btn btn-warning mt-5" onClick={this.addtask}>Add to List</button></div>
+                  <div><button type="submit" class="btn btn-warning mt-5" onClick={this.addtask}>Add to List</button>
+                    &emsp;
+                    <button type="submit" class="btn btn-warning mt-5" onClick={this.recyc}>Recycle Bin</button></div>
 
                   <div><h4 class="mt-5">Total Tasks Pending: {this.state.count}</h4></div>
                   <div>
                     <table class="table table-bordered mt-5 table-hover table-dark table-striped">
                       <thead class="thead-dark">
                         <tr>
-                          <th colSpan="5" ><center>DETAILS OF TASKS PENDING</center></th>
+                          <th colSpan="6" ><center>DETAILS OF TASKS PENDING</center></th>
                         </tr>
                         <tr>
                           <th><center>TASK</center></th>
                           <th><center>SUBMISSION DATE</center></th>
                           <th><center>DEADLINE</center></th>
-                          <th colSpan="2"><center>OPERATIONS</center></th>
+                          <th colSpan="3"><center>OPERATIONS</center></th>
                         </tr>
                       </thead>
 
@@ -142,6 +157,7 @@
                             <td>{ele.time}</td>
                             <td><center><button type="submit" class="btn btn-warning" onClick={this.deletetask} value={index} >Remove Task</button></center></td>
                             <td><center><button type="submit" class="btn btn-warning" onClick={this.updatetask} value={index} >Update Task</button></center></td>
+                            <td><center><button type="submit" class="btn btn-warning" onClick={this.recyclebin} value={index} >Send to Recycle Bin</button></center></td>
                           </tr>
                         )}
                       </tbody>
@@ -154,6 +170,11 @@
           </div>
         );
       }
+
+
+      recyc = () => {
+        ReactDOM.render(<Recycle />, document.querySelector("#todo"));
+      };
 
       read = (event) => {
 
@@ -177,14 +198,32 @@
         const list = [...this.state.list];
 
         list.splice(Number(event.target.value), 1);
-        console.log(list);
+        // console.log(list);
         this.setState({ list: [...list], count: this.state.count - 1 })
-        console.log(event.target.value);
+        // console.log(event.target.value);
 
       };
       updatetask = (event) => {
         localStorage.setItem("list", JSON.stringify(this.state.list));
         ReactDOM.render(<Update numb={event.target.value} />, document.querySelector("#todo"));
+      };
+
+      recyclebin = (event) => {
+
+        const list = [...this.state.list];
+        var x = list[event.target.value];
+        list.splice(Number(event.target.value), 1);
+        // console.log(list);
+        this.setState({ list: [...list], count: this.state.count - 1, deletedlist: [...this.state.deletedlist, x] }, this.bin);
+        // console.log(event.target.value);
+
+      };
+
+      bin = (event) => {
+        localStorage.setItem("list", JSON.stringify(this.state.list));
+        localStorage.setItem("deletedlist", JSON.stringify(this.state.deletedlist));
+        localStorage.setItem("count", this.state.count);
+        ReactDOM.render(<Recycle />, document.querySelector("#todo"));
       };
 
     }
@@ -222,7 +261,7 @@
 
 
           localStorage.setItem("list", JSON.stringify(this.state.modifiedlist));
-          ReactDOM.render(<Todo />, document.querySelector("#todo"));
+
         });
       }
 
@@ -250,6 +289,8 @@
                   </div>
 
                   <div><button type="submit" class="btn btn-warning mt-5" onClick={this.change}>SAVE CHANGES</button></div>
+                  <h2 class="mt-2">After Saving<br />Click here to go back to main page</h2>
+                  <div><button type="submit" class="btn btn-warning mt-1" onClick={this.mainpage}>Redirect to main page</button></div>
                 </center>
               </div>
               <div class="col-md-2"></div>
@@ -257,6 +298,11 @@
           </div>
         );
       }
+
+      mainpage = () => {
+        localStorage.setItem("list", JSON.stringify(this.state.modifiedlist));
+        ReactDOM.render(<Todo />, document.querySelector("#todo"));
+      };
 
       readnewtask = (event) => {
         this.setState({ changetask: event.target.value });
@@ -283,6 +329,101 @@
         });
         this.setState({ modifiedlist: [...oldlist] });
       };
+    }
+
+    class Recycle extends React.Component {
+      constructor() {
+        super();
+        this.state = {
+          deleted: [],
+          temp: [],
+          cnt: 0
+        };
+      }
+
+      componentDidMount() {
+        const newlist = localStorage.getItem("deletedlist");
+        const final = localStorage.getItem("list");
+        const count1 = localStorage.getItem("count");
+        const final2 = JSON.parse(final);
+        const list1 = JSON.parse(newlist);
+
+        this.setState({ deleted: [...list1], temp: [...final2], cnt: Number(count1) });
+
+        window.addEventListener("beforeunload", () => {
+
+          localStorage.setItem("count", this.state.cnt);
+          localStorage.setItem("list", JSON.stringify(this.state.temp));
+          localStorage.setItem("deletedlist", JSON.stringify(this.state.deleted));
+
+        });
+      }
+
+      render() {
+        return (
+          <div class="container">
+            <div class="row">
+              <div class="col-md-2"></div>
+              <div class="col-md-8 mt-3">
+                <center>
+                  <h1>DELETED TASKS</h1>
+                  <div>
+                    <table class="table table-bordered mt-5 table-hover table-dark table-striped">
+                      <thead class="thead-dark">
+                        <tr>
+                          <th colSpan="5" ><center>DETAILS OF TASKS PENDING</center></th>
+                        </tr>
+                        <tr>
+                          <th><center>TASK</center></th>
+                          <th><center>SUBMISSION DATE</center></th>
+                          <th><center>DEADLINE</center></th>
+                          <th colSpan="3"><center>OPERATIONS</center></th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {this.state.deleted.map((ele, index) =>
+                          <tr key={index}>
+                            <td>{ele.task}</td>
+                            <td>{ele.date}</td>
+                            <td>{ele.time}</td>
+                            <td><center><button type="submit" class="btn btn-warning" onClick={this.deletetask} value={index} >Remove Task</button></center></td>
+                            <td><center><button type="submit" class="btn btn-warning" onClick={this.restoretask} value={index} >Restore Task</button></center></td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div><button type="submit" class="btn btn-warning mt-1" onClick={this.mainpage}>Redirect to main page</button></div>
+                </center>
+              </div>
+              <div class="col-md-2"></div>
+            </div>
+          </div>
+        );
+      }
+
+      mainpage = () => {
+        localStorage.setItem("count", this.state.cnt);
+        localStorage.setItem("list", JSON.stringify(this.state.temp));
+        localStorage.setItem("deletedlist", JSON.stringify(this.state.deleted));
+        ReactDOM.render(<Todo />, document.querySelector("#todo"));
+      };
+
+      deletetask = (event) => {
+        const list = [...this.state.deleted];
+        list.splice(Number(event.target.value), 1);
+        this.setState({ deleted: [...list] })
+      };
+
+      restoretask = (event) => {
+        const list = [...this.state.deleted];
+        var x = list[event.target.value]
+        list.splice(Number(event.target.value), 1);
+        // console.log(list);
+        this.setState({ deleted: [...list], cnt: this.state.cnt + 1, temp: [...this.state.temp, x] });
+      }
+
     }
   </script>
 
