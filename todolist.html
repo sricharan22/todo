@@ -58,8 +58,9 @@
         var delet = localStorage.getItem("deletedlist");
         var deleted = JSON.parse(delet);
         var list2 = JSON.parse(list1);
-        // alert(list2 == null);
-        if (list2 != null && list2.length != 0) {
+        // alert(list2[0]);
+        
+        if (list1 != null && list2.length > 0) {
           list2.map((ele, index) => {
             var today = new Date();
             var year = today.getFullYear();
@@ -88,7 +89,7 @@
             }
           });
         }
-        else if (list2.length == 0) {
+        else if ( list1 == null || list2.length == 0) {
           // alert("hiii");
           // var l1 = this.state.list;
           fetch("https://raw.githubusercontent.com/sricharan22/htmlques/master/tasks.html")
