@@ -59,7 +59,7 @@
         var deleted = JSON.parse(delet);
         var list2 = JSON.parse(list1);
         // alert(list2[0]);
-        
+
         if (list1 != null && list2.length > 0) {
           list2.map((ele, index) => {
             var today = new Date();
@@ -72,10 +72,19 @@
             if (td < 10) {
               td = "0" + td;
             }
+            // alert(today.getHours() + ":" + today.getMinutes());
             var date = year + '-' + month + '-' + td;
             if (date >= ele.date) {
               if (date == ele.date) {
-                if (today.getHours() + ":" + today.getMinutes() >= ele.time) {
+                var H = today.getHours();
+                if (H < 10) {
+                  H = "0" + H;
+                }
+                var M = today.getMinutes();
+                if (M < 10) {
+                  M = "0" + M;
+                }
+                if (H + ":" + M >= ele.time) {
                   alert("task " + ele.task + " is being delted");
                   list2.splice(index, 1);
                   cnt -= 1;
@@ -89,7 +98,7 @@
             }
           });
         }
-        else if ( list1 == null || list2.length == 0) {
+        else if (list1 == null || list2.length == 0) {
           // alert("hiii");
           // var l1 = this.state.list;
           fetch("https://raw.githubusercontent.com/sricharan22/htmlques/master/tasks.html")
